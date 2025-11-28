@@ -1,0 +1,7 @@
+databaseChangeLog:
+  - changeSet:
+      id: 2025-11-27--00-create-schema
+      author: Iakov Lysenko
+      changes:
+        - sql:
+            sql: CREATE SCHEMA IF NOT EXISTS wallet;

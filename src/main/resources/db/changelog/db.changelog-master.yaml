@@ -1,0 +1,9 @@
+databaseChangeLog:
+  - include:
+      file: db/changelog/changes/2025-11-27--00-create-schema.yaml
+  - include:
+      file: db/changelog/changes/2025-11-27--01-create-wallets-table.yaml
+  - include:
+      file: db/changelog/changes/2025-11-27--02-create-wallet-operations-table.yaml
+  - include:
+      file: db/changelog/changes/2025-11-27--03-insert-test-data.yaml

@@ -1,0 +1,63 @@
+databaseChangeLog:
+  - changeSet:
+      id: 2025-11-27--03-insert-test-data
+      author: Iakov Lysenko
+      preConditions:
+        - onFail: MARK_RAN
+        - tableExists:
+            schemaName: wallet
+            tableName: wallets
+        - sqlCheck:
+            expectedResult: 0
+            sql: SELECT COUNT(*) FROM wallet.wallets WHERE id = '550e8400-e29b-41d4-a716-446655440000'
+      changes:
+        - insert:
+            schemaName: wallet
+            tableName: wallets
+            columns:
+              - column:
+                  name: id
+                  value: "550e8400-e29b-41d4-a716-446655440000"
+              - column:
+                  name: balance
+                  valueNumeric: 1000.00
+        - insert:
+            schemaName: wallet
+            tableName: wallets
+            columns:
+              - column:
+                  name: id
+                  value: "550e8400-e29b-41d4-a716-446655440001"
+              - column:
+                  name: balance
+                  valueNumeric: 5000.00
+        - insert:
+            schemaName: wallet
+            tableName: wallets
+            columns:
+              - column:
+                  name: id
+                  value: "550e8400-e29b-41d4-a716-446655440002"
+              - column:
+                  name: balance
+                  valueNumeric: 0.00
+        - insert:
+            schemaName: wallet
+            tableName: wallets
+            columns:
+              - column:
+                  name: id
+                  value: "550e8400-e29b-41d4-a716-446655440003"
+              - column:
+                  name: balance
+                  valueNumeric: 10000.00
+        - insert:
+            schemaName: wallet
+            tableName: wallets
+            columns:
+              - column:
+                  name: id
+                  value: "550e8400-e29b-41d4-a716-446655440004"
+              - column:
+                  name: balance
+                  valueNumeric: 250.50

@@ -1,3 +1,33 @@
+server:
+  port: ${SERVER_PORT:8080}
+
 spring:
   application:
     name: wallet
+    schema: wallet
+
+  r2dbc:
+    url: ${DB_URL_R2DBC:r2dbc:postgresql://localhost:5432/postgres}
+    username: ${DB_LOGIN:postgres}
+    password: ${DB_PASSWORD:postgres}
+    pool:
+      max-size: ${DATASOURCE_POOL_MAX_SIZE:10}
+      min-idle: ${DATASOURCE_POOL_MIN_IDLE:1}
+
+  liquibase:
+    user: ${DB_LOGIN:postgres}
+    password: ${DB_PASSWORD:postgres}
+    url: ${DB_URL_JDBC:jdbc:postgresql://localhost:5432/postgres}
+    default-schema: wallet
+    liquibase-schema: public
+    drop-first: false
+    clear-checksums: false
+
+logging:
+  level:
+    root: ${LOG_LEVEL:INFO}
+    ru.iakovlysenko.wallet: ${LOG_LEVEL:DEBUG}
+    liquibase: DEBUG
+    org.springframework.jdbc: DEBUG
+    org.springframework.boot.autoconfigure.liquibase: DEBUG
+    org.springframework.boot.jdbc: DEBUG

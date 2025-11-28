@@ -1,0 +1,27 @@
+databaseChangeLog:
+  - changeSet:
+      id: 2025-11-27--01-create-wallets-table
+      author: Iakov Lysenko
+      changes:
+        - createTable:
+            schemaName: wallet
+            tableName: wallets
+            columns:
+              - column:
+                  name: id
+                  type: UUID
+                  constraints:
+                    primaryKey: true
+              - column:
+                  name: balance
+                  type: DECIMAL(19, 2)
+                  constraints:
+                    nullable: false
+        - createIndex:
+            schemaName: wallet
+            indexName: idx_wallets_id_unique
+            tableName: wallets
+            unique: true
+            columns:
+              - column:
+                  name: id
