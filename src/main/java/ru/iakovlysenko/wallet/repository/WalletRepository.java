@@ -1,5 +1,6 @@
 package ru.iakovlysenko.wallet.repository;
 
+import org.springframework.data.r2dbc.repository.Modifying;
 import org.springframework.data.r2dbc.repository.Query;
 import org.springframework.data.r2dbc.repository.R2dbcRepository;
 import org.springframework.stereotype.Repository;
@@ -19,9 +20,12 @@ public interface WalletRepository extends R2dbcRepository<Wallet, UUID> {
     @Override
     Mono<Wallet> findById(UUID id);
 
+    @Modifying
+    @Query("INSERT INTO wallet.wallets (id, balance) VALUES (:id, :balance) ON CONFLICT (id) DO NOTHING")
+    Mono<Integer> insertOrIgnore(UUID id, BigDecimal balance);
+
+    @Modifying
     @Query("UPDATE wallet.wallets SET balance = :balance WHERE id = :id")
     Mono<Integer> updateBalance(UUID id, BigDecimal balance);
 
-    @Query("INSERT INTO wallet.wallets (id, balance) VALUES (:id, :balance) ON CONFLICT (id) DO NOTHING")
-    Mono<Integer> insertOrIgnore(UUID id, BigDecimal balance);
 }

@@ -2,7 +2,6 @@ package ru.iakovlysenko.wallet.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.r2dbc.core.DatabaseClient;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.reactive.TransactionalOperator;
 import reactor.core.publisher.Mono;
@@ -26,7 +25,6 @@ import java.util.UUID;
 public class WalletServiceImpl implements WalletService {
 
     private final WalletRepository walletRepository;
-    private final DatabaseClient databaseClient;
     private final TransactionalOperator transactionalOperator;
 
 
@@ -34,7 +32,7 @@ public class WalletServiceImpl implements WalletService {
     public Mono<WalletOperationResponse> performOperation(UUID walletId, OperationType operationType, Long amount) {
         BigDecimal amountDecimal = BigDecimal.valueOf(amount);
 
-        Mono<WalletOperationResponse> operation = findWalletByIdDirect(walletId)
+        Mono<WalletOperationResponse> operation = findWalletById(walletId)
                 .switchIfEmpty(createWalletIfNotExists(walletId))
                 .flatMap(wallet -> {
                     BigDecimal newBalance;
@@ -50,7 +48,7 @@ public class WalletServiceImpl implements WalletService {
                     }
 
                     return updateWalletBalance(walletId, newBalance)
-                            .then(findWalletByIdDirect(walletId))
+                            .then(findWalletById(walletId))
                             .map(updatedWallet -> new WalletOperationResponse(
                                     updatedWallet.getId(),
                                     updatedWallet.getBalance(),
@@ -64,6 +62,7 @@ public class WalletServiceImpl implements WalletService {
     @Override
     public Mono<WalletBalanceResponse> getBalance(UUID walletId) {
         return findWalletById(walletId)
+                .switchIfEmpty(Mono.error(new WalletNotFoundException("Кошелек не найден: " + walletId)))
                 .map(wallet -> new WalletBalanceResponse(wallet.getId(), wallet.getBalance()));
     }
 
@@ -71,47 +70,19 @@ public class WalletServiceImpl implements WalletService {
         log.debug("Поиск кошелька по id: {}", walletId);
         return walletRepository.findById(walletId)
                 .doOnNext(wallet -> log.debug("Найден кошелек: id={}, balance={}", wallet.getId(), wallet.getBalance()))
-                .doOnError(error -> log.error("Ошибка поиска кошелька {}: {}", walletId, error.getMessage()))
-                .switchIfEmpty(Mono.defer(() -> {
-                    log.warn("Кошелек не найден: {}", walletId);
-                    return Mono.error(new WalletNotFoundException("Кошелек не найден: " + walletId));
-                }));
-    }
-
-    private Mono<Wallet> findWalletByIdDirect(UUID walletId) {
-        log.debug("Поиск кошелька: {}", walletId);
-        return databaseClient.sql("SELECT * FROM wallet.wallets WHERE id = :id")
-                .bind("id", walletId)
-                .map((row, metadata) -> {
-                    Wallet wallet = new Wallet(
-                            row.get("id", UUID.class),
-                            row.get("balance", java.math.BigDecimal.class)
-                    );
-                    log.debug("Кошелек найден: id={}, balance={}", wallet.getId(), wallet.getBalance());
-                    return wallet;
-                })
-                .one()
-                .doOnError(error -> log.error("Ошибка при поиске кошелька {}: {}", walletId, error.getMessage()));
+                .doOnError(error -> log.error("Ошибка поиска кошелька {}: {}", walletId, error.getMessage()));
     }
 
     private Mono<Wallet> createWalletIfNotExists(UUID walletId) {
         log.debug("Кошелек {} не найден, создаем новый с балансом 0", walletId);
-        return databaseClient.sql("INSERT INTO wallet.wallets (id, balance) VALUES (:id, :balance) ON CONFLICT (id) DO NOTHING")
-                .bind("id", walletId)
-                .bind("balance", BigDecimal.ZERO)
-                .fetch()
-                .rowsUpdated()
-                .then(findWalletByIdDirect(walletId))
+        return walletRepository.insertOrIgnore(walletId, BigDecimal.ZERO)
+                .then(findWalletById(walletId))
                 .switchIfEmpty(Mono.error(new WalletNotFoundException("Кошелек не найден: " + walletId)));
     }
 
     private Mono<Void> updateWalletBalance(UUID walletId, BigDecimal newBalance) {
         log.debug("Обновление баланса: id={}, newBalance={}", walletId, newBalance);
-        return databaseClient.sql("UPDATE wallet.wallets SET balance = :balance WHERE id = :id")
-                .bind("balance", newBalance)
-                .bind("id", walletId)
-                .fetch()
-                .rowsUpdated()
+        return walletRepository.updateBalance(walletId, newBalance)
                 .doOnNext(rowsUpdated -> log.debug("Результат обновление: {} кол-во обновлений {}", rowsUpdated, walletId))
                 .filter(rowsUpdated -> rowsUpdated > 0)
                 .switchIfEmpty(Mono.defer(() -> {

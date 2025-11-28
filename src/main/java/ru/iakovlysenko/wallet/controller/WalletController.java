@@ -17,16 +17,12 @@ public interface WalletController {
 
     /**
      * Метод, осуществляющий операцию.
-     * @param request
-     * @return
      */
     @PostMapping("/wallet")
     Mono<ResponseEntity<WalletOperationResponse>> performOperation(@Valid @RequestBody WalletOperationRequest request);
 
     /**
      * Метод для получения баланса.
-     * @param walletId
-     * @return
      */
     @GetMapping("/wallets/{walletId}")
     Mono<ResponseEntity<Object>> getBalance(@PathVariable UUID walletId);
