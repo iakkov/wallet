@@ -23,14 +23,17 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      platforms:
+        - linux/amd64
+        - linux/arm64
     container_name: wallet-app
     depends_on:
       postgres:
         condition: service_healthy
     environment:
-      DB_URL: r2dbc:postgresql://postgres:5432/${POSTGRES_DB:-wallet}
-      DB_JDBC_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-wallet}
-      DB_USERNAME: ${POSTGRES_USER:-postgres}
+      DB_URL_R2DBC: r2dbc:postgresql://postgres:5432/${POSTGRES_DB:-wallet}
+      DB_URL_JDBC: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-wallet}
+      DB_LOGIN: ${POSTGRES_USER:-postgres}
       DB_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
       SERVER_PORT: ${SERVER_PORT:-8080}
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
